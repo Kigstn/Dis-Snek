@@ -1,8 +1,13 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, List
+
+import discord_typings
 
 from dis_snek.client.const import MISSING, Absent
 from ..route import Route
 from dis_snek.client.utils.serializer import dict_filter_missing
+
+__all__ = ["ReactionRequests"]
+
 
 if TYPE_CHECKING:
     from dis_snek.models.discord.snowflake import Snowflake_Type
@@ -115,7 +120,7 @@ class ReactionRequests:
         emoji: str,
         limit: Absent[int] = MISSING,
         after: "Snowflake_Type" = MISSING,
-    ) -> list:
+    ) -> List[discord_typings.UserData]:
         """
         Gets specific reaction from a message.
 
@@ -123,6 +128,9 @@ class ReactionRequests:
             channel_id: The channel this is taking place in.
             message_id: The message to get the reaction.
             emoji: The emoji to get. (format: `name:id`)
+
+        returns:
+            List of users who reacted with the emoji.
 
         """
         return await self.request(
@@ -133,5 +141,5 @@ class ReactionRequests:
                 message_id=message_id,
                 emoji=emoji,
             ),
-            params=dict_filter_missing({"limit": limit, "after": after}),
+            params={"limit": limit, "after": after},
         )

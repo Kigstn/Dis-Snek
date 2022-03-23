@@ -1,7 +1,12 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
+import discord_typings
+
 from dis_snek.client.const import GLOBAL_SCOPE
 from ..route import Route
+
+__all__ = ["InteractionRequests"]
+
 
 if TYPE_CHECKING:
     from dis_snek.models.discord.snowflake import Snowflake_Type
@@ -30,15 +35,16 @@ class InteractionRequests:
 
     async def get_application_commands(
         self, application_id: "Snowflake_Type", guild_id: "Snowflake_Type"
-    ) -> List[Dict]:
+    ) -> List[discord_typings.ApplicationCommandData]:
         """
         Get all application commands for this application from discord.
 
         parameters:
             application_id: the what application to query
             guild_id: specify a guild to get commands from
+
         returns:
-            InteractionCommand
+            Application command data
 
         """
         if guild_id == GLOBAL_SCOPE:
@@ -47,7 +53,7 @@ class InteractionRequests:
 
     async def overwrite_application_commands(
         self, app_id: "Snowflake_Type", data: List[Dict], guild_id: "Snowflake_Type" = None
-    ) -> dict:
+    ) -> List[discord_typings.ApplicationCommandData]:
         """
         Take a list of commands and overwrite the existing command list within the given scope
 
@@ -63,7 +69,7 @@ class InteractionRequests:
 
     async def create_application_command(
         self, app_id: "Snowflake_Type", command: Dict, guild_id: "Snowflake_Type"
-    ) -> dict:
+    ) -> discord_typings.ApplicationCommandData:
         """
         Add a given command to scope.
 
@@ -105,7 +111,7 @@ class InteractionRequests:
 
     async def edit_interaction_message(
         self, payload: dict, application_id: "Snowflake_Type", token: str, message_id: str = "@original"
-    ) -> dict:
+    ) -> discord_typings.MessageData:
         """
         Edits an existing interaction message.
 
@@ -123,7 +129,9 @@ class InteractionRequests:
             Route("PATCH", f"/webhooks/{application_id}/{token}/messages/{message_id}"), data=payload
         )
 
-    async def get_interaction_message(self, application_id: str, token: str, message_id: str = "@original") -> dict:
+    async def get_interaction_message(
+        self, application_id: str, token: str, message_id: str = "@original"
+    ) -> discord_typings.MessageData:
         """
         Gets an existing interaction message.
 
@@ -145,7 +153,7 @@ class InteractionRequests:
         scope: "Snowflake_Type",
         cmd_id: "Snowflake_Type",
         permissions: List[dict],
-    ) -> dict:
+    ) -> discord_typings.ApplicationCommandPermissionsData:
         """
         Edits command permissions for a specific command.
 
@@ -165,7 +173,7 @@ class InteractionRequests:
 
     async def batch_edit_application_command_permissions(
         self, application_id: "Snowflake_Type", scope: "Snowflake_Type", data: List[dict]
-    ) -> dict:
+    ) -> List[discord_typings.ApplicationCommandPermissionsData]:
         """
         Edit multiple command permissions within a single scope.
 
@@ -184,7 +192,7 @@ class InteractionRequests:
 
     async def get_application_command_permissions(
         self, application_id: "Snowflake_Type", scope: "Snowflake_Type", cmd_id: "Snowflake_Type"
-    ) -> dict:
+    ) -> List[discord_typings.ApplicationCommandPermissionsData]:
         """
         Get permission data for a command.
 
@@ -202,7 +210,7 @@ class InteractionRequests:
 
     async def batch_get_application_command_permissions(
         self, application_id: "Snowflake_Type", scope: "Snowflake_Type"
-    ) -> dict:
+    ) -> List[discord_typings.ApplicationCommandPermissionsData]:
         """
         Get permission data for all commands in a scope.
 

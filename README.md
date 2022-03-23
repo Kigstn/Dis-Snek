@@ -1,9 +1,9 @@
 [![PyPI](https://img.shields.io/pypi/v/dis-snek)](https://pypi.org/project/dis-snek/)
 [![Downloads](https://static.pepy.tech/personalized-badge/dis-snek?period=total&units=abbreviation&left_color=grey&right_color=green&left_text=pip%20installs)](https://pepy.tech/project/dis-snek)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![black-formatted](https://img.shields.io/github/workflow/status/Discord-Snake-Pit/dis-snek/black-action/master?label=Black%20Format&logo=github)](https://github.com/LordOfPolls/dis_snek/actions/workflows/black.yml)
-[![CodeQL](https://img.shields.io/github/workflow/status/Discord-Snake-Pit/dis-snek/CodeQL/master?label=CodeQL&logo=Github)](https://github.com/LordOfPolls/dis_snek/actions/workflows/codeql-analysis.yml)
-[![Discord](https://img.shields.io/discord/870046872864165888?color=%235865F2&label=Server&logo=discord&logoColor=%235865F2)](https://discord.gg/hpfNhH8BsY)
+[![black-formatted](https://img.shields.io/github/workflow/status/Discord-Snake-Pit/dis-snek/black-action/master?label=Black%20Format&logo=github)](https://github.com/Discord-Snake-Pit/Dis-Snek/actions/workflows/black.yml)
+[![CodeQL](https://img.shields.io/github/workflow/status/Discord-Snake-Pit/dis-snek/CodeQL/master?label=CodeQL&logo=Github)](https://github.com/Discord-Snake-Pit/Dis-Snek/actions/workflows/codeql-analysis.yml)
+[![Discord](https://img.shields.io/discord/870046872864165888?color=%235865F2&label=Server&logo=discord&logoColor=%235865F2)](https://discord.gg/dis-snek)
 [![Documentation Status](https://readthedocs.org/projects/dis-snek/badge/?version=latest)](https://dis-snek.readthedocs.io/en/latest/?badge=latest)
 
 # What is this?
@@ -43,14 +43,16 @@ async def user_context(ctx):
 
 bot.start("TOKEN")
 ```
-For more examples check out [our examples repo](https://github.com/Discord-Snake-Pit/examples) or the [docs](https://dis-snek.readthedocs.io/), and if you get stuck join our [Discord server](https://discord.gg/dis-snek)
+For more examples check out [our examples repo](https://github.com/Discord-Snake-Pit/examples) or the [docs](https://dis-snek.readthedocs.io/). You also can [explore projects with the dis-snek topic](https://github.com/topics/dis-snek).
+
+If you get stuck join our [Discord server](https://discord.gg/dis-snek).
 
 
 ## "Can I contribute to this project?"
 Of course, we welcome all contributions to this library. Just ensure you follow our [requirements](/CONTRIBUTING.md).
-If youre stuck for things to contribute, check out our [Trello](https://trello.com/b/LVjnmYKt/dev-board) for inspiration.
+If youre stuck for things to contribute, check out our [GitHub Projects](https://github.com/orgs/Discord-Snake-Pit/projects/1) for inspiration.
 
 ## Links:
 - Support Server: https://discord.gg/dis-snek
 - Documentation:  https://dis-snek.rtfd.io/
-- Trello: https://trello.com/b/LVjnmYKt/dev-board
+- GitHub Projects: https://github.com/orgs/Discord-Snake-Pit/projects/1

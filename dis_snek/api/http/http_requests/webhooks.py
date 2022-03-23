@@ -1,7 +1,12 @@
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any, List, Optional
+
+import discord_typings
 
 from ..route import Route
 from dis_snek.client.utils.serializer import dict_filter_none
+
+__all__ = ["WebhookRequests"]
+
 
 if TYPE_CHECKING:
     from dis_snek.models.discord.snowflake import Snowflake_Type
@@ -10,7 +15,9 @@ if TYPE_CHECKING:
 class WebhookRequests:
     request: Any
 
-    async def create_webhook(self, channel_id: "Snowflake_Type", name: str, avatar: Any = None) -> dict:
+    async def create_webhook(
+        self, channel_id: "Snowflake_Type", name: str, avatar: Any = None
+    ) -> discord_typings.WebhookData:
         """
         Create a new webhook.
 
@@ -24,7 +31,7 @@ class WebhookRequests:
             Route("POST", f"/channels/{channel_id}/webhooks"), data={"name": name, "avatar": avatar}
         )
 
-    async def get_channel_webhooks(self, channel_id: "Snowflake_Type") -> List[dict]:
+    async def get_channel_webhooks(self, channel_id: "Snowflake_Type") -> List[discord_typings.WebhookData]:
         """
         Return a list of channel webhook objects.
 
@@ -36,7 +43,7 @@ class WebhookRequests:
         """
         return await self.request(Route("GET", f"/channels/{channel_id}/webhooks"))
 
-    async def get_guild_webhooks(self, guild_id: "Snowflake_Type") -> List[dict]:
+    async def get_guild_webhooks(self, guild_id: "Snowflake_Type") -> List[discord_typings.WebhookData]:
         """
         Return a list of guild webhook objects.
 
@@ -48,7 +55,7 @@ class WebhookRequests:
         """
         return await self.request(Route("GET", f"/guilds/{guild_id}/webhooks"))
 
-    async def get_webhook(self, webhook_id: "Snowflake_Type", webhook_token: str = None) -> dict:
+    async def get_webhook(self, webhook_id: "Snowflake_Type", webhook_token: str = None) -> discord_typings.WebhookData:
         """
         Return the new webhook object for the given id.
 
@@ -70,7 +77,7 @@ class WebhookRequests:
         avatar: Any,
         channel_id: "Snowflake_Type",
         webhook_token: str = None,
-    ) -> dict:
+    ) -> discord_typings.WebhookData:
         """
         Modify a webhook.
 
@@ -88,7 +95,7 @@ class WebhookRequests:
             Route("PATCH", endpoint), data={"name": name, "avatar": avatar, "channel_id": channel_id}
         )
 
-    async def delete_webhook(self, webhook_id: "Snowflake_Type", webhook_token: str = None) -> dict:
+    async def delete_webhook(self, webhook_id: "Snowflake_Type", webhook_token: str = None) -> None:
         """
         Delete a webhook.
 
@@ -108,9 +115,9 @@ class WebhookRequests:
         webhook_id: "Snowflake_Type",
         webhook_token: str,
         payload: dict,
-        wait=False,
+        wait: bool = False,
         thread_id: "Snowflake_Type" = None,
-    ) -> dict:
+    ) -> Optional[discord_typings.MessageData]:
         """
         Execute a webhook. Basically send a message as the webhook.
 
@@ -133,7 +140,7 @@ class WebhookRequests:
 
     async def get_webhook_message(
         self, webhook_id: "Snowflake_Type", webhook_token: str, message_id: "Snowflake_Type"
-    ) -> dict:
+    ) -> discord_typings.MessageData:
         """
         Returns a previously-sent webhook message from the same token. Returns a message object on success.
 
@@ -149,7 +156,7 @@ class WebhookRequests:
 
     async def edit_webhook_message(
         self, webhook_id: "Snowflake_Type", webhook_token: str, message_id: "Snowflake_Type", payload: dict
-    ) -> dict:
+    ) -> discord_typings.MessageData:
         """
         Edits a previously-sent webhook message from the same token.
 

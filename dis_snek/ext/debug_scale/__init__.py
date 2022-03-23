@@ -1,9 +1,7 @@
-import datetime
 import logging
 import platform
-import tracemalloc
 
-from dis_snek import Scale, listen, slash_command, InteractionContext, Timestamp, Intents
+from dis_snek import Scale, listen, slash_command, InteractionContext, Timestamp, TimestampStyles, Intents
 from dis_snek.client.const import logger_name, __version__, __py_version__
 from dis_snek.models.snek import checks
 from .debug_application_cmd import DebugAppCMD
@@ -17,15 +15,11 @@ log = logging.getLogger(logger_name)
 
 
 class DebugScale(DebugExec, DebugAppCMD, DebugScales, Scale):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
+        super().__init__(bot)
         self.add_scale_check(checks.is_owner())
 
-        log.info("Debug Scale is growing! Activating memory allocation trace and asyncio debug...")
-
-        if not tracemalloc.is_tracing():
-            tracemalloc.start()
-        if not self.bot.loop.get_debug():
-            self.bot.loop.set_debug(True)
+        log.info("Debug Scale is growing!")
 
     @listen()
     async def on_startup(self) -> None:
@@ -41,17 +35,14 @@ class DebugScale(DebugExec, DebugAppCMD, DebugScales, Scale):
     async def debug_info(self, ctx: InteractionContext) -> None:
         await ctx.defer()
 
-        uptime = datetime.datetime.now() - self.bot.start_time
+        uptime = Timestamp.fromdatetime(self.bot.start_time)
         e = debug_embed("General")
         e.set_thumbnail(self.bot.user.avatar.url)
         e.add_field("Operating System", platform.platform())
 
         e.add_field("Version Info", f"Dis-Snek@{__version__} | Py@{__py_version__}")
 
-        e.add_field(
-            "Start Time",
-            f"{Timestamp.fromdatetime(self.bot.start_time)}\n({strf_delta(uptime)} ago)",
-        )
+        e.add_field("Start Time", f"{uptime.format(TimestampStyles.RelativeTime)}")
 
         privileged_intents = [i.name for i in self.bot.intents if i in Intents.PRIVILEGED]
         if privileged_intents:
@@ -68,7 +59,7 @@ class DebugScale(DebugExec, DebugAppCMD, DebugScales, Scale):
         await ctx.defer()
         e = debug_embed("Cache")
 
-        e.description = get_cache_state(self.bot)
+        e.description = f"```prolog\n{get_cache_state(self.bot)}\n```"
         await ctx.send(embeds=[e])
 
     @debug_info.subcommand("shutdown", sub_cmd_description="Shutdown the bot.")

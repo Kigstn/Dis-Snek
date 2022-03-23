@@ -4,12 +4,11 @@ import traceback
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, Union
 
-import attr
-
 from dis_snek.models.discord.enums import Intents, Status, ActivityType
 from dis_snek.models.discord.activity import Activity
 from dis_snek.client.errors import SnakeException, WebSocketClosed
 from dis_snek.client.const import logger_name, MISSING, Absent
+from dis_snek.client.utils.attr_utils import define
 from .gateway import WebsocketClient
 from dis_snek.api import events
 
@@ -21,7 +20,7 @@ __all__ = ["ConnectionState"]
 log = logging.getLogger(logger_name)
 
 
-@attr.s(auto_attribs=True)
+@define(kw_only=False)
 class ConnectionState:
     client: "Snake"
     """The bot's client"""
@@ -38,6 +37,9 @@ class ConnectionState:
 
     gateway_url: str = MISSING
     """The URL that the gateway should connect to."""
+
+    gateway_started: asyncio.Event = asyncio.Event()
+    """Event to check if the gateway has been started."""
 
     _shard_task: asyncio.Task | None = None
 
@@ -66,6 +68,8 @@ class ConnectionState:
         self.start_time = datetime.now()
         self._shard_task = asyncio.create_task(self._ws_connect())
 
+        self.gateway_started.set()
+
         # Historically this method didn't return until the connection closed
         # so we need to wait for the task to exit.
         await self._shard_task
@@ -79,6 +83,8 @@ class ConnectionState:
         if self._shard_task is not None:
             await self._shard_task
             self._shard_task = None
+
+        self.gateway_started.clear()
 
     async def _ws_connect(self) -> None:
         log.info("Attempting to initially connect to gateway...")

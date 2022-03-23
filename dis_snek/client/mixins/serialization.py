@@ -1,38 +1,37 @@
 import logging
-from typing import Any, Dict, List, TypeVar
+from typing import Any, Dict, List, TypeVar, Type
 
-import attr
+import attrs
 
 import dis_snek.client.const as const
+from dis_snek.client.utils.attr_utils import define
 import dis_snek.client.utils.serializer as serializer
 
 __all__ = ["DictSerializationMixin"]
 
 log = logging.getLogger(const.logger_name)
 
-T = TypeVar("T")
 
-
-@attr.s()
+@define(slots=False)
 class DictSerializationMixin:
     @classmethod
     def _get_keys(cls) -> frozenset:
         if (keys := getattr(cls, "_keys", None)) is None:
-            keys = frozenset(field.name for field in attr.fields(cls))
+            keys = frozenset(field.name for field in attrs.fields(cls))
             setattr(cls, "_keys", keys)
         return keys
 
     @classmethod
     def _get_init_keys(cls) -> frozenset:
         if (init_keys := getattr(cls, "_init_keys", None)) is None:
-            init_keys = frozenset(field.name.removeprefix("_") for field in attr.fields(cls) if field.init)
+            init_keys = frozenset(field.name.removeprefix("_") for field in attrs.fields(cls) if field.init)
             setattr(cls, "_init_keys", init_keys)
         return init_keys
 
     @classmethod
     def _filter_kwargs(cls, kwargs_dict: dict, keys: frozenset) -> dict:
-        unused = {k: v for k, v in kwargs_dict.items() if k not in keys}
-        if unused and const.kwarg_spam:
+        if const.kwarg_spam:
+            unused = {k: v for k, v in kwargs_dict.items() if k not in keys}
             log.debug(f"Unused kwargs: {cls.__name__}: {unused}")  # for debug
         return {k: v for k, v in kwargs_dict.items() if k in keys}
 
@@ -51,7 +50,7 @@ class DictSerializationMixin:
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]):
+    def from_dict(cls: Type[const.T], data: Dict[str, Any]) -> const.T:
         """
         Process and converts dictionary data received from discord api to object class instance.
 
@@ -65,7 +64,7 @@ class DictSerializationMixin:
         return cls(**cls._filter_kwargs(data, cls._get_init_keys()))
 
     @classmethod
-    def from_list(cls, datas: List[Dict[str, Any]]):
+    def from_list(cls: Type[const.T], datas: List[Dict[str, Any]]) -> List[const.T]:
         """
         Process and converts list data received from discord api to object class instances.
 
@@ -75,7 +74,7 @@ class DictSerializationMixin:
         """
         return [cls.from_dict(data) for data in datas]
 
-    def update_from_dict(self: T, data: Dict[str, Any]) -> T:
+    def update_from_dict(self: Type[const.T], data: Dict[str, Any]) -> const.T:
         """Updates object attribute(s) with new json data received from discord api."""
         data = self._process_dict(data)
         for key, value in self._filter_kwargs(data, self._get_keys()).items():

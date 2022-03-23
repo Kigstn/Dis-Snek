@@ -1,16 +1,14 @@
 import logging
-from io import IOBase
-from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
-import attr
 from aiohttp import FormData
+from dis_snek.models.discord.file import UPLOADABLE_TYPE
 
 import dis_snek.models.discord.message as message
 from dis_snek.client.const import MISSING, logger_name, Absent
 from dis_snek.client.errors import AlreadyDeferred
 from dis_snek.client.mixins.send import SendMixin
-from dis_snek.client.utils.attr_utils import define, docs
+from dis_snek.client.utils.attr_utils import define, field, docs
 from dis_snek.client.utils.converters import optional
 from dis_snek.models.discord.enums import MessageFlags, CommandTypes
 from dis_snek.models.discord.message import Attachment
@@ -19,7 +17,6 @@ from dis_snek.models.snek.application_commands import CallbackTypes, OptionTypes
 
 if TYPE_CHECKING:
     from dis_snek.client import Snake
-    from dis_snek.models import File
     from dis_snek.models.discord.channel import TYPE_MESSAGEABLE_CHANNEL
     from dis_snek.models.discord.components import BaseComponent
     from dis_snek.models.discord.embed import Embed
@@ -45,31 +42,31 @@ __all__ = [
 log = logging.getLogger(logger_name)
 
 
-@attr.s
+@define()
 class Resolved:
     """Represents resolved data in an interaction."""
 
-    channels: Dict["Snowflake_Type", "TYPE_MESSAGEABLE_CHANNEL"] = attr.ib(
+    channels: Dict["Snowflake_Type", "TYPE_MESSAGEABLE_CHANNEL"] = field(
         factory=dict, metadata=docs("A dictionary of channels mentioned in the interaction")
     )
-    members: Dict["Snowflake_Type", "Member"] = attr.ib(
+    members: Dict["Snowflake_Type", "Member"] = field(
         factory=dict, metadata=docs("A dictionary of members mentioned in the interaction")
     )
-    users: Dict["Snowflake_Type", "User"] = attr.ib(
+    users: Dict["Snowflake_Type", "User"] = field(
         factory=dict, metadata=docs("A dictionary of users mentioned in the interaction")
     )
-    roles: Dict["Snowflake_Type", "Role"] = attr.ib(
+    roles: Dict["Snowflake_Type", "Role"] = field(
         factory=dict, metadata=docs("A dictionary of roles mentioned in the interaction")
     )
-    messages: Dict["Snowflake_Type", "Message"] = attr.ib(
+    messages: Dict["Snowflake_Type", "Message"] = field(
         factory=dict, metadata=docs("A dictionary of messages mentioned in the interaction")
     )
-    attachments: Dict["Snowflake_Type", "Attachment"] = attr.ib(
+    attachments: Dict["Snowflake_Type", "Attachment"] = field(
         factory=dict, metadata=docs("A dictionary of attachments tied to the interaction")
     )
 
     @classmethod
-    def from_dict(cls, client: "Snake", data: dict, guild_id: Optional["Snowflake_Type"] = None):
+    def from_dict(cls, client: "Snake", data: dict, guild_id: Optional["Snowflake_Type"] = None) -> "Resolved":
         new_cls = cls()
 
         if channels := data.get("channels"):
@@ -88,7 +85,7 @@ class Resolved:
 
         if roles := data.get("roles"):
             for key, _role in roles.items():
-                new_cls.roles[key] = client.cache.role_cache.get(to_snowflake(key))
+                new_cls.roles[key] = client.cache.get_role(to_snowflake(key))
 
         if messages := data.get("messages"):
             for key, _msg in messages.items():
@@ -105,22 +102,22 @@ class Resolved:
 class Context:
     """Represents the context of a command."""
 
-    _client: "Snake" = attr.ib(default=None)
-    invoked_name: str = attr.ib(default=None, metadata=docs("The name of the command to be invoked"))
+    _client: "Snake" = field(default=None)
+    invoked_name: str = field(default=None, metadata=docs("The name of the command to be invoked"))
 
-    args: List = attr.ib(factory=list, metadata=docs("The list of arguments to be passed to the command"))
-    kwargs: Dict = attr.ib(factory=dict, metadata=docs("The list of keyword arguments to be passed"))
+    args: List = field(factory=list, metadata=docs("The list of arguments to be passed to the command"))
+    kwargs: Dict = field(factory=dict, metadata=docs("The list of keyword arguments to be passed"))
 
-    author: Union["Member", "User"] = attr.ib(default=None, metadata=docs("The author of the message"))
-    channel: "TYPE_MESSAGEABLE_CHANNEL" = attr.ib(default=None, metadata=docs("The channel this was sent within"))
-    guild_id: "Snowflake_Type" = attr.ib(
+    author: Union["Member", "User"] = field(default=None, metadata=docs("The author of the message"))
+    channel: "TYPE_MESSAGEABLE_CHANNEL" = field(default=None, metadata=docs("The channel this was sent within"))
+    guild_id: "Snowflake_Type" = field(
         default=None, converter=to_optional_snowflake, metadata=docs("The guild this was sent within, if not a DM")
     )
-    message: "Message" = attr.ib(default=None, metadata=docs("The message associated with this context"))
+    message: "Message" = field(default=None, metadata=docs("The message associated with this context"))
 
     @property
     def guild(self) -> Optional["Guild"]:
-        return self._client.cache.guild_cache.get(self.guild_id)
+        return self._client.cache.get_guild(self.guild_id)
 
     @property
     def bot(self) -> "Snake":
@@ -128,29 +125,36 @@ class Context:
         return self._client
 
 
-@define
+@define()
 class _BaseInteractionContext(Context):
     """An internal object used to define the attributes of interaction context and its children."""
 
-    _token: str = attr.ib(default=None, metadata=docs("The token for the interaction"))
-    _context_type: int = attr.ib()  # we don't want to convert this in case of a new context type, which is expected
-    interaction_id: str = attr.ib(default=None, metadata=docs("The id of the interaction"))
-    target_id: "Snowflake_Type" = attr.ib(
+    _token: str = field(default=None, metadata=docs("The token for the interaction"))
+    _context_type: int = field()  # we don't want to convert this in case of a new context type, which is expected
+    interaction_id: str = field(default=None, metadata=docs("The id of the interaction"))
+    target_id: "Snowflake_Type" = field(
         default=None,
         metadata=docs("The ID of the target, used for context menus to show what was clicked on"),
         converter=optional(to_snowflake),
     )
+    locale: str = field(
+        default=None,
+        metadata=docs(
+            "The selected language of the invoking user \n(https://discord.com/developers/docs/reference#locales)"
+        ),
+    )
+    guild_locale: str = field(default=None, metadata=docs("The guild's preferred locale"))
 
-    deferred: bool = attr.ib(default=False, metadata=docs("Is this interaction deferred?"))
-    responded: bool = attr.ib(default=False, metadata=docs("Have we responded to the interaction?"))
-    ephemeral: bool = attr.ib(default=False, metadata=docs("Are responses to this interaction *hidden*"))
+    deferred: bool = field(default=False, metadata=docs("Is this interaction deferred?"))
+    responded: bool = field(default=False, metadata=docs("Have we responded to the interaction?"))
+    ephemeral: bool = field(default=False, metadata=docs("Are responses to this interaction *hidden*"))
 
-    resolved: Resolved = attr.ib(default=Resolved(), metadata=docs("Discord objects mentioned within this interaction"))
+    resolved: Resolved = field(default=Resolved(), metadata=docs("Discord objects mentioned within this interaction"))
 
-    data: Dict = attr.ib(factory=dict, metadata=docs("The raw data of this interaction"))
+    data: Dict = field(factory=dict, metadata=docs("The raw data of this interaction"))
 
     @classmethod
-    def from_dict(cls, data: Dict, client: "Snake"):
+    def from_dict(cls, data: Dict, client: "Snake") -> "Context":
         """Create a context object from a dictionary."""
         new_cls = cls(
             client=client,
@@ -160,6 +164,8 @@ class _BaseInteractionContext(Context):
             invoked_name=data["data"].get("name"),
             guild_id=data.get("guild_id"),
             context_type=data["data"].get("type", 0),
+            locale=data.get("locale"),
+            guild_locale=data.get("guild_locale"),
         )
         new_cls.data = data
 
@@ -169,10 +175,10 @@ class _BaseInteractionContext(Context):
         if new_cls.guild_id:
             new_cls.author = client.cache.place_member_data(new_cls.guild_id, data["member"].copy())
             client.cache.place_user_data(data["member"]["user"])
-            new_cls.channel = client.cache.channel_cache.get(to_snowflake(data["channel_id"]))
+            new_cls.channel = client.cache.get_channel(to_snowflake(data["channel_id"]))
         else:
             new_cls.author = client.cache.place_user_data(data["user"])
-            new_cls.channel = client.cache.channel_cache.get(new_cls.author.id)
+            new_cls.channel = client.cache.get_channel(new_cls.author.id)
 
         new_cls.target_id = data["data"].get("target_id")
 
@@ -180,8 +186,10 @@ class _BaseInteractionContext(Context):
 
         return new_cls
 
-    def _process_options(self, data: dict):
+    def _process_options(self, data: dict) -> None:
         kwargs = {}
+        guild_id = to_snowflake(data.get("guild_id", 0))
+
         if options := data["data"].get("options"):
             o_type = options[0]["type"]
             if o_type in (OptionTypes.SUB_COMMAND, OptionTypes.SUB_COMMAND_GROUP):
@@ -202,23 +210,21 @@ class _BaseInteractionContext(Context):
                 match option["type"]:
                     case OptionTypes.USER:
                         value = (
-                            self._client.cache.member_cache.get(
-                                (to_snowflake(data.get("guild_id", 0)), to_snowflake(value))
-                            )
-                            or self._client.cache.user_cache.get(to_snowflake(value))
+                            self._client.cache.get_member(guild_id, to_snowflake(value))
+                            or self._client.cache.get_user(to_snowflake(value))
                         ) or value
 
                     case OptionTypes.CHANNEL:
-                        value = self._client.cache.channel_cache.get(to_snowflake(value)) or value
+                        value = self._client.cache.get_channel(to_snowflake(value)) or value
 
                     case OptionTypes.ROLE:
-                        value = self._client.cache.role_cache.get(to_snowflake(value)) or value
+                        value = self._client.cache.get_role(to_snowflake(value)) or value
 
                     case OptionTypes.MENTIONABLE:
                         snow = to_snowflake(value)
-                        if user := self._client.cache.member_cache.get(snow) or self._client.cache.user_cache.get(snow):
+                        if user := self._client.cache.get_member(guild_id, snow) or self._client.cache.get_user(snow):
                             value = user
-                        elif role := self._client.cache.role_cache.get(snow):
+                        elif role := self._client.cache.get_role(snow):
                             value = role
 
                     case OptionTypes.ATTACHMENT:
@@ -263,7 +269,7 @@ class InteractionContext(_BaseInteractionContext, SendMixin):
 
     """
 
-    async def defer(self, ephemeral=False) -> None:
+    async def defer(self, ephemeral: bool = False) -> None:
         """
         Defers the response, showing a loading state.
 
@@ -312,7 +318,8 @@ class InteractionContext(_BaseInteractionContext, SendMixin):
         stickers: Optional[Union[List[Union["Sticker", "Snowflake_Type"]], "Sticker", "Snowflake_Type"]] = None,
         allowed_mentions: Optional[Union["AllowedMentions", dict]] = None,
         reply_to: Optional[Union["MessageReference", "Message", dict, "Snowflake_Type"]] = None,
-        file: Optional[Union["File", "IOBase", "Path", str]] = None,
+        files: Optional[Union[UPLOADABLE_TYPE, List[UPLOADABLE_TYPE]]] = None,
+        file: Optional[UPLOADABLE_TYPE] = None,
         tts: bool = False,
         flags: Optional[Union[int, "MessageFlags"]] = None,
         ephemeral: bool = False,
@@ -328,7 +335,8 @@ class InteractionContext(_BaseInteractionContext, SendMixin):
             stickers: IDs of up to 3 stickers in the server to send in the message.
             allowed_mentions: Allowed mentions for the message.
             reply_to: Message to reference, must be from the same channel.
-            file: Location of file to send, the bytes or the File() instance, defaults to None.
+            files: Files to send, the path, bytes or File() instance, defaults to None. You may have up to 10 files.
+            file: Files to send, the path, bytes or File() instance, defaults to None. You may have up to 10 files.
             tts: Should this message use Text To Speech.
             flags: Message flags to apply.
             ephemeral bool: Should this message be sent as ephemeral (hidden)
@@ -349,6 +357,7 @@ class InteractionContext(_BaseInteractionContext, SendMixin):
             stickers=stickers,
             allowed_mentions=allowed_mentions,
             reply_to=reply_to,
+            files=files,
             file=file,
             tts=tts,
             flags=flags,
@@ -365,39 +374,39 @@ class InteractionContext(_BaseInteractionContext, SendMixin):
             case CommandTypes.USER:
                 # This can only be in the member or user cache
                 caches = [
-                    (self._client.cache.member_cache, (self.guild_id, self.target_id)),
-                    (self._client.cache.user_cache, self.target_id),
+                    (self._client.cache.get_member, (self.guild_id, self.target_id)),
+                    (self._client.cache.get_user, self.target_id),
                 ]
             case CommandTypes.MESSAGE:
                 # This can only be in the message cache
-                caches = [(self._client.cache.message_cache, (self.channel.id, self.target_id))]
+                caches = [(self._client.cache.get_message, (self.channel.id, self.target_id))]
             case _:
                 # Most likely a new context type, check all rational caches for the target_id
                 log.warning(f"New Context Type Detected. Please Report: {self._context_type}")
                 caches = [
-                    (self._client.cache.message_cache, (self.channel.id, self.target_id)),
-                    (self._client.cache.member_cache, (self.guild_id, self.target_id)),
-                    (self._client.cache.user_cache, self.target_id),
-                    (self._client.cache.channel_cache, self.target_id),
-                    (self._client.cache.role_cache, self.target_id),
-                    (self._client.cache.emoji_cache, self.target_id),  # unlikely, so check last
+                    (self._client.cache.get_message, (self.channel.id, self.target_id)),
+                    (self._client.cache.get_member, (self.guild_id, self.target_id)),
+                    (self._client.cache.get_user, self.target_id),
+                    (self._client.cache.get_channel, self.target_id),
+                    (self._client.cache.get_role, self.target_id),
+                    (self._client.cache.get_emoji, self.target_id),  # unlikely, so check last
                 ]
 
-        for cache, key in caches:
-            thing = cache.get(key, MISSING)
-            if thing is not MISSING:
+        for cache, keys in caches:
+            thing = cache(*keys)
+            if thing is not None:
                 break
         return thing
 
 
 @define
 class ComponentContext(InteractionContext):
-    custom_id: str = attr.ib(default="", metadata=docs("The ID given to the component that has been pressed"))
-    component_type: int = attr.ib(default=0, metadata=docs("The type of component that has been pressed"))
+    custom_id: str = field(default="", metadata=docs("The ID given to the component that has been pressed"))
+    component_type: int = field(default=0, metadata=docs("The type of component that has been pressed"))
 
-    values: List = attr.ib(factory=list, metadata=docs("The values set"))
+    values: List = field(factory=list, metadata=docs("The values set"))
 
-    defer_edit_origin: bool = attr.ib(default=False, metadata=docs("Are we editing the message the component is on"))
+    defer_edit_origin: bool = field(default=False, metadata=docs("Are we editing the message the component is on"))
 
     @classmethod
     def from_dict(cls, data: Dict, client: "Snake") -> "ComponentContext":
@@ -412,7 +421,7 @@ class ComponentContext(InteractionContext):
 
         return new_cls
 
-    async def defer(self, ephemeral=False, edit_origin: bool = False) -> None:
+    async def defer(self, ephemeral: bool = False, edit_origin: bool = False) -> None:
         """
         Defers the response, showing a loading state.
 
@@ -449,7 +458,8 @@ class ComponentContext(InteractionContext):
             Union[List[List[Union["BaseComponent", dict]]], List[Union["BaseComponent", dict]], "BaseComponent", dict]
         ] = None,
         allowed_mentions: Optional[Union["AllowedMentions", dict]] = None,
-        file: Optional[Union["File", "IOBase", "Path", str]] = None,
+        files: Optional[Union[UPLOADABLE_TYPE, List[UPLOADABLE_TYPE]]] = None,
+        file: Optional[UPLOADABLE_TYPE] = None,
         tts: bool = False,
     ) -> "Message":
         """
@@ -462,14 +472,15 @@ class ComponentContext(InteractionContext):
             components: The components to include with the message.
             allowed_mentions: Allowed mentions for the message.
             reply_to: Message to reference, must be from the same channel.
-            file: Location of file to send, the bytes or the File() instance, defaults to None.
+            files: Files to send, the path, bytes or File() instance, defaults to None. You may have up to 10 files.
+            file: Files to send, the path, bytes or File() instance, defaults to None. You may have up to 10 files.
             tts: Should this message use Text To Speech.
 
         returns:
             The message after it was edited.
 
         """
-        if not self.responded and not self.deferred and file:
+        if not self.responded and not self.deferred and (files or file):
             # Discord doesn't allow files at initial response, so we defer then edit.
             await self.defer(edit_origin=True)
 
@@ -478,7 +489,7 @@ class ComponentContext(InteractionContext):
             embeds=embeds or embed,
             components=components,
             allowed_mentions=allowed_mentions,
-            file=file,
+            files=files or file,
             tts=tts,
         )
 
@@ -506,7 +517,7 @@ class ComponentContext(InteractionContext):
 
 @define
 class AutocompleteContext(_BaseInteractionContext):
-    focussed_option: str = attr.ib(default=MISSING, metadata=docs("The option the user is currently filling in"))
+    focussed_option: str = field(default=MISSING, metadata=docs("The option the user is currently filling in"))
 
     @classmethod
     def from_dict(cls, data: Dict, client: "Snake") -> "ComponentContext":
@@ -553,7 +564,7 @@ class AutocompleteContext(_BaseInteractionContext):
 
 @define
 class ModalContext(InteractionContext):
-    custom_id: str = attr.ib(default="")
+    custom_id: str = field(default="")
 
     @classmethod
     def from_dict(cls, data: Dict, client: "Snake") -> "ModalContext":
@@ -578,22 +589,32 @@ class ModalContext(InteractionContext):
 
 @define
 class MessageContext(Context, SendMixin):
-    prefix: str = attr.ib(default=MISSING, metadata=docs("The prefix used to invoke this command"))
+    prefix: str = field(default=MISSING, metadata=docs("The prefix used to invoke this command"))
 
     @classmethod
-    def from_message(cls, client: "Snake", message: "Message"):
+    def from_message(cls, client: "Snake", message: "Message") -> "MessageContext":
         new_cls = cls(
             client=client,
             message=message,
             author=message.author,
             channel=message.channel,
-            guild_id=message.guild.id if message.guild else None,
+            guild_id=message._guild_id,
         )
         return new_cls
 
     @property
     def content_parameters(self) -> str:
         return self.message.content.removeprefix(f"{self.prefix}{self.invoked_name}").strip()
+
+    async def reply(
+        self,
+        content: Optional[str] = None,
+        embeds: Optional[Union[List[Union["Embed", dict]], Union["Embed", dict]]] = None,
+        embed: Optional[Union["Embed", dict]] = None,
+        **kwargs,
+    ) -> "Message":
+        """Reply to this message, takes all the same attributes as `send`."""
+        return await self.send(content=content, reply_to=self.message, embeds=embeds or embed, **kwargs)
 
     async def _send_http_request(self, message_payload: Union[dict, "FormData"]) -> dict:
         return await self._client.http.create_message(message_payload, self.channel.id)

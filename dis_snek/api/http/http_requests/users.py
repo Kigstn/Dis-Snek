@@ -1,6 +1,11 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, List
+
+import discord_typings
 
 from ..route import Route
+
+__all__ = ["UserRequests"]
+
 
 if TYPE_CHECKING:
     from dis_snek.models.discord.snowflake import Snowflake_Type
@@ -9,23 +14,24 @@ if TYPE_CHECKING:
 class UserRequests:
     request: Any
 
-    async def get_current_user(self) -> dict:
+    async def get_current_user(self) -> discord_typings.UserData:
         """Shortcut to get requester's user."""
-        return self.get_user("@me")
+        return await self.get_user("@me")
 
-    async def get_user(self, user_id: "Snowflake_Type") -> dict:
+    async def get_user(self, user_id: "Snowflake_Type") -> discord_typings.UserData:
         """
         Get a user object for a given user ID.
 
         parameters:
             user_id: The user to get.
+
         returns:
-            user
+            The user object.
 
         """
         return await self.request(Route("GET", f"/users/{user_id}"))
 
-    async def modify_client_user(self, payload: dict) -> dict:
+    async def modify_client_user(self, payload: dict) -> discord_typings.UserData:
         """
         Modify the user account settings.
 
@@ -35,7 +41,7 @@ class UserRequests:
         """
         return await self.request(Route("PATCH", "/users/@me"), data=payload)
 
-    async def get_user_guilds(self) -> list:
+    async def get_user_guilds(self) -> List[discord_typings.GuildData]:
         """
         Returns a list of partial guild objects the current user is a member of.
 
@@ -44,7 +50,7 @@ class UserRequests:
         """
         return await self.request(Route("GET", "/users/@me/guilds"))
 
-    async def leave_guild(self, guild_id) -> dict:
+    async def leave_guild(self, guild_id: "Snowflake_Type") -> None:
         """
         Leave a guild. Returns a 204 empty response on success.
 
@@ -54,7 +60,7 @@ class UserRequests:
         """
         return await self.request(Route("DELETE", f"/users/@me/guilds/{guild_id}"))
 
-    async def create_dm(self, recipient_id) -> dict:
+    async def create_dm(self, recipient_id: "Snowflake_Type") -> discord_typings.DMChannelData:
         """
         Create a new DM channel with a user. Returns a DM channel object.
 
@@ -64,7 +70,7 @@ class UserRequests:
         """
         return await self.request(Route("POST", "/users/@me/channels"), data={"recipient_id": recipient_id})
 
-    async def create_group_dm(self, payload: dict) -> dict:
+    async def create_group_dm(self, payload: dict) -> discord_typings.GroupDMChannelData:
         """
         Create a new group DM channel with multiple users.
 

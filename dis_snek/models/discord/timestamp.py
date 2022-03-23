@@ -56,7 +56,11 @@ class Timestamp(datetime):
 
     @classmethod
     def fromtimestamp(cls, t: float, tz=None) -> "Timestamp":
-        timestamp = super().fromtimestamp(t, tz=tz)
+        try:
+            timestamp = super().fromtimestamp(t, tz=tz)
+        except Exception:
+            # May be in milliseconds instead of seconds
+            timestamp = super().fromtimestamp(t / 1000, tz=tz)
 
         if timestamp.tzinfo is None:  # assume naive datetimes are based on local timezone
             return timestamp.astimezone()
@@ -67,7 +71,7 @@ class Timestamp(datetime):
         return super().fromordinal(n).astimezone()
 
     @classmethod
-    def now(cls, tz=None):
+    def now(cls, tz=None) -> "Timestamp":
         """
         Construct a datetime from time.time() and optional time zone info.
 
@@ -78,7 +82,7 @@ class Timestamp(datetime):
         return cls.fromtimestamp(t, tz)
 
     @classmethod
-    def utcnow(cls):
+    def utcnow(cls) -> "Timestamp":
         """Construct a timezone-aware UTC datetime from time.time()."""
         t = time.time()
         return cls.utcfromtimestamp(t)
@@ -110,5 +114,5 @@ class Timestamp(datetime):
         else:
             return f"<t:{self.timestamp():.0f}:{style}>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.format()

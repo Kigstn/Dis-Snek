@@ -1,9 +1,14 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
+import discord_typings
+
 from dis_snek.client.const import MISSING, Absent
-from dis_snek.models.discord.enums import ChannelTypes, StagePrivacyLevel
+from dis_snek.models.discord.enums import ChannelTypes, StagePrivacyLevel, Permissions, OverwriteTypes
 from ..route import Route
 from dis_snek.client.utils.serializer import dict_filter_none, dict_filter_missing
+
+__all__ = ["ChannelRequests"]
+
 
 if TYPE_CHECKING:
     from dis_snek.models.discord.channel import PermissionOverwrite
@@ -13,7 +18,7 @@ if TYPE_CHECKING:
 class ChannelRequests:
     request: Any
 
-    async def get_channel(self, channel_id: "Snowflake_Type") -> dict:
+    async def get_channel(self, channel_id: "Snowflake_Type") -> discord_typings.ChannelData:
         """
         Get a channel by ID. Returns a channel object. If the channel is a thread, a thread member object is included.
 
@@ -32,7 +37,7 @@ class ChannelRequests:
         around: Optional["Snowflake_Type"] = None,
         before: Optional["Snowflake_Type"] = None,
         after: Optional["Snowflake_Type"] = None,
-    ) -> List[dict]:
+    ) -> List[discord_typings.MessageData]:
         """
         Get the messages for a channel.
 
@@ -80,8 +85,28 @@ class ChannelRequests:
         user_limit: int = 0,
         rate_limit_per_user: int = 0,
         reason: Absent[str] = MISSING,
-    ) -> Dict:
-        """"""
+    ) -> discord_typings.ChannelData:
+        """
+        Create a channel in a guild.
+
+        parameters:
+            guild_id: The ID of the guild to create the channel in
+            name: The name of the channel
+            channel_type: The type of channel to create
+            topic: The topic of the channel
+            position: The position of the channel in the channel list
+            permission_overwrites: Permission overwrites to apply to the channel
+            parent_id: The category this channel should be within
+            nsfw: Should this channel be marked nsfw
+            bitrate: The bitrate of this channel, only for voice
+            user_limit: The max users that can be in this channel, only for voice
+            rate_limit_per_user: The time users must wait between sending messages
+            reason: The reason for creating this channel
+
+        Returns:
+            The created channel object
+
+        """
         payload = {
             "name": name,
             "type": channel_type,
@@ -99,8 +124,6 @@ class ChannelRequests:
                 user_limit=user_limit,
             )
 
-        # clean up payload
-        payload = dict_filter_missing(payload)
         return await self.request(Route("POST", f"/guilds/{guild_id}/channels"), data=payload, reason=reason)
 
     async def move_channel(
@@ -130,7 +153,9 @@ class ChannelRequests:
 
         return await self.request(Route("PATCH", f"/guilds/{guild_id}/channels"), data=payload, reason=reason)
 
-    async def modify_channel(self, channel_id: "Snowflake_Type", data: dict, reason: Absent[str] = MISSING) -> dict:
+    async def modify_channel(
+        self, channel_id: "Snowflake_Type", data: dict, reason: Absent[str] = MISSING
+    ) -> discord_typings.ChannelData:
         """
         Update a channel's settings, returns the updated channel object on success.
 
@@ -156,7 +181,7 @@ class ChannelRequests:
         """
         return await self.request(Route("DELETE", f"/channels/{channel_id}"), reason=reason)
 
-    async def get_channel_invites(self, channel_id: "Snowflake_Type") -> List[dict]:
+    async def get_channel_invites(self, channel_id: "Snowflake_Type") -> List[discord_typings.InviteData]:
         """
         Get the invites for the channel.
 
@@ -180,7 +205,7 @@ class ChannelRequests:
         target_user_id: "Snowflake_Type" = None,
         target_application_id: "Snowflake_Type" = None,
         reason: Absent[str] = MISSING,
-    ) -> dict:
+    ) -> discord_typings.InviteData:
         """
         Create an invite for the given channel.
 
@@ -215,7 +240,7 @@ class ChannelRequests:
         with_counts: bool = False,
         with_expiration: bool = True,
         scheduled_event_id: "Snowflake_Type" = None,
-    ) -> dict:
+    ) -> discord_typings.InviteData:
         """
         Get an invite object for a given code.
 
@@ -238,7 +263,7 @@ class ChannelRequests:
         )
         return await self.request(Route("GET", f"/invites/{invite_code}", params=params))
 
-    async def delete_invite(self, invite_code: str, reason: Absent[str] = MISSING) -> dict:
+    async def delete_invite(self, invite_code: str, reason: Absent[str] = MISSING) -> discord_typings.InviteData:
         """
         Delete an invite.
 
@@ -256,9 +281,9 @@ class ChannelRequests:
         self,
         channel_id: "Snowflake_Type",
         overwrite_id: "Snowflake_Type",
-        allow: str,
-        deny: str,
-        perm_type: int,
+        allow: Union["Permissions", int],
+        deny: Union["Permissions", int],
+        perm_type: Union["OverwriteTypes", int],
         reason: Absent[str] = MISSING,
     ) -> None:
         """
@@ -293,7 +318,9 @@ class ChannelRequests:
         """
         return await self.request(Route("DELETE", f"/channels/{channel_id}/{overwrite_id}"), reason=reason)
 
-    async def follow_news_channel(self, channel_id: "Snowflake_Type", webhook_channel_id: "Snowflake_Type") -> dict:
+    async def follow_news_channel(
+        self, channel_id: "Snowflake_Type", webhook_channel_id: "Snowflake_Type"
+    ) -> discord_typings.FollowedChannelData:
         """
         Follow a news channel to send messages to the target channel.
 
@@ -319,7 +346,7 @@ class ChannelRequests:
         """
         return await self.request(Route("POST", f"/channels/{channel_id}/typing"))
 
-    async def get_pinned_messages(self, channel_id: "Snowflake_Type") -> List[dict]:
+    async def get_pinned_messages(self, channel_id: "Snowflake_Type") -> List[discord_typings.MessageData]:
         """
         Get all pinned messages from a channel.
 
@@ -338,7 +365,7 @@ class ChannelRequests:
         topic: str,
         privacy_level: StagePrivacyLevel = 1,
         reason: Absent[str] = MISSING,
-    ) -> dict:
+    ) -> discord_typings.StageInstanceData:
         """
         Create a new stage instance.
 
@@ -362,7 +389,7 @@ class ChannelRequests:
             reason=reason,
         )
 
-    async def get_stage_instance(self, channel_id: "Snowflake_Type") -> dict:
+    async def get_stage_instance(self, channel_id: "Snowflake_Type") -> discord_typings.StageInstanceData:
         """
         Get the stage instance associated with a given channel, if it exists.
 
@@ -377,7 +404,7 @@ class ChannelRequests:
 
     async def modify_stage_instance(
         self, channel_id: "Snowflake_Type", topic: str = None, privacy_level: int = None, reason: Absent[str] = MISSING
-    ) -> dict:
+    ) -> discord_typings.StageInstanceData:
         """
         Update the fields of a given stage instance.
 

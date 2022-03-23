@@ -115,10 +115,6 @@ class WebsocketClient:
         # Santity check, it is extremely important that an instance isn't reused.
         self._entered = False
 
-    @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        return self.state.client.loop
-
     async def __aenter__(self: SELF) -> SELF:
         if self._entered:
             raise RuntimeError("An instance of 'WebsocketClient' cannot be re-used!")
@@ -170,7 +166,7 @@ class WebsocketClient:
         else:
             return float("inf")
 
-    async def send(self, data: str, bypass=False) -> None:
+    async def send(self, data: str, bypass: bool = False) -> None:
         """
         Send data to the gateway.
 
@@ -188,7 +184,7 @@ class WebsocketClient:
 
             await self.ws.send_str(data)
 
-    async def send_json(self, data: dict, bypass=False) -> None:
+    async def send_json(self, data: dict, bypass: bool = False) -> None:
         """
         Send json data to the gateway.
 
@@ -411,15 +407,18 @@ class WebsocketClient:
                 self.sequence = seq
                 self.session_id = data["session_id"]
                 log.info("Connected to gateway!")
-                log.debug(f" Session ID: {self.session_id} Trace: {self._trace}")
-                return self.state.client.dispatch(events.WebsocketReady(data))
+                log.debug(f"Session ID: {self.session_id} Trace: {self._trace}")
+                self.state.client.dispatch(events.WebsocketReady(data))
+                return
 
             case "RESUMED":
                 log.info(f"Successfully resumed connection! Session_ID: {self.session_id}")
-                return self.state.client.dispatch(events.Resume())
+                self.state.client.dispatch(events.Resume())
+                return
 
             case "GUILD_MEMBERS_CHUNK":
-                return self.loop.create_task(self._process_member_chunk(data))
+                asyncio.create_task(self._process_member_chunk(data))
+                return
 
             case _:
                 # the above events are "special", and are handled by the gateway itself, the rest can be dispatched
@@ -519,9 +518,9 @@ class WebsocketClient:
         }
         await self.send_json(payload)
 
-    async def _process_member_chunk(self, chunk: dict):
+    async def _process_member_chunk(self, chunk: dict) -> None:
 
-        guild = self.state.client.cache.guild_cache.get(to_snowflake(chunk.get("guild_id")))
+        guild = self.state.client.cache.get_guild(to_snowflake(chunk.get("guild_id")))
         if guild:
-            return self.loop.create_task(guild.process_member_chunk(chunk))
+            return asyncio.create_task(guild.process_member_chunk(chunk))
         raise ValueError(f"No guild exists for {chunk.get('guild_id')}")

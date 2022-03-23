@@ -2,7 +2,7 @@ import logging
 from enum import Enum, EnumMeta, IntEnum, IntFlag, _decompose
 from functools import reduce
 from operator import or_
-from typing import Tuple
+from typing import Iterator, Tuple
 
 from dis_snek.client.const import logger_name
 
@@ -36,6 +36,7 @@ __all__ = [
     "VideoQualityModes",
     "AutoArchiveDuration",
     "ActivityType",
+    "ActivityFlags",
     "Status",
     "StagePrivacyLevel",
     "IntegrationExpireBehaviour",
@@ -43,14 +44,15 @@ __all__ = [
     "ScheduledEventPrivacyLevel",
     "ScheduledEventType",
     "ScheduledEventStatus",
+    "AuditLogEventType",
 ]
 
 
 class AntiFlag:
-    def __init__(self, anti=0):
+    def __init__(self, anti=0) -> None:
         self.anti = anti
 
-    def __get__(self, instance, cls):
+    def __get__(self, instance, cls) -> int:
         negative = ~cls(self.anti)
         positive = cls(reduce(or_, negative))
         return positive
@@ -61,16 +63,16 @@ def _distinct(source) -> Tuple:
 
 
 class DistinctFlag(EnumMeta):
-    def __iter__(cls):
+    def __iter__(cls) -> Iterator:
         yield from _distinct(super().__iter__())
 
-    def __call__(cls, value, names=None, *, module=None, qualname=None, type=None, start=1):
+    def __call__(cls, value, names=None, *, module=None, qualname=None, type=None, start=1) -> "DistinctFlag":
         # To automatically convert string values into ints (eg for permissions)
         return super().__call__(int(value), names, module=module, qualname=qualname, type=type, start=start)
 
 
 class DiscordIntFlag(IntFlag, metaclass=DistinctFlag):
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         yield from _decompose(self.__class__, self)[0]
 
 
@@ -166,7 +168,7 @@ class Intents(DiscordIntFlag):  # type: ignore
         non_privileged=False,
         default=True,
         all=False,
-    ):
+    ) -> "Intents":
         """Set your desired intents."""
         kwargs = locals()
         del kwargs["cls"]
@@ -309,6 +311,8 @@ class MessageFlags(DiscordIntFlag):  # type: ignore
     HAS_THREAD = 1 << 5
     EPHEMERAL = 1 << 6
     LOADING = 1 << 7
+    FAILED_TO_MENTION_SOME_ROLES_IN_THREAD = 1 << 8
+    """this message failed to mention some roles and add their members to the thread"""
 
     # Special members
     NONE = 0
@@ -530,8 +534,13 @@ class SystemChannelFlags(DiscordIntFlag):
     """System channel settings."""
 
     SUPPRESS_JOIN_NOTIFICATIONS = 1 << 0
+    """Suppress member join notifications"""
     SUPPRESS_PREMIUM_SUBSCRIPTIONS = 1 << 1
+    """Suppress server boost notifications"""
     SUPPRESS_GUILD_REMINDER_NOTIFICATIONS = 1 << 2
+    """Suppress server setup tips"""
+    SUPPRESS_JOIN_NOTIFICATION_REPLIES = 1 << 3
+    """Hide member join sticker reply buttons"""
 
     # Special members
     NONE = 0
@@ -571,6 +580,18 @@ class ActivityType(IntEnum):
     COMPETING = 5  # "Competing in Arena World Champions"
 
     PLAYING = GAME
+
+
+class ActivityFlags(DiscordIntFlag):
+    INSTANCE = 1 << 0
+    JOIN = 1 << 1
+    SPECTATE = 1 << 2
+    JOIN_REQUEST = 1 << 3
+    SYNC = 1 << 4
+    PLAY = 1 << 5
+    PARTY_PRIVACY_FRIENDS = 1 << 6
+    PARTY_PRIVACY_VOICE_CHANNEL = 1 << 7
+    EMBEDDED = 1 << 8
 
 
 class Status(str, Enum):

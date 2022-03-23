@@ -1,13 +1,12 @@
 import logging
 import re
-from base64 import b64encode
 from typing import Any, Dict, Union, Optional
 
 import aiohttp  # type: ignore
 
 from dis_snek.client.const import logger_name
 
-__all__ = ["OverriddenJson", "response_decode", "get_args", "get_first_word", "_bytes_to_base64_data"]
+__all__ = ["OverriddenJson", "response_decode", "get_args", "get_first_word"]
 
 log = logging.getLogger(logger_name)
 
@@ -43,7 +42,6 @@ _pending_regex = _pending_regex.replace("2", f"[{''.join(list(_quotes.values()))
 
 arg_parse = re.compile(_pending_regex)
 white_space = re.compile(r"\s+")
-initial_word = re.compile(r"^([^\s]+)\s*?")
 
 
 class OverriddenJson:
@@ -99,26 +97,4 @@ def get_first_word(text: str) -> Optional[str]:
          The requested word
 
     """
-    found = initial_word.findall(text)
-    if len(found) == 0:
-        return None
-    return found[0]
-
-
-def _get_mime_type_for_image(data: bytes):
-    # taken from d.py, alternative is to use libmagic, which would require users to install libs
-    if data.startswith(b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"):
-        return "image/png"
-    elif data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
-        return "image/jpeg"
-    elif data.startswith((b"\x47\x49\x46\x38\x37\x61", b"\x47\x49\x46\x38\x39\x61")):
-        return "image/gif"
-    elif data.startswith(b"RIFF") and data[8:12] == b"WEBP":
-        return "image/webp"
-    else:
-        raise ValueError("Unsupported image type given")
-
-
-def _bytes_to_base64_data(data: bytes) -> str:
-    mime = _get_mime_type_for_image(data)
-    return f"data:{mime};base64,{b64encode(data).decode('ascii')}"
+    return split[0] if (split := text.split(maxsplit=1)) else None

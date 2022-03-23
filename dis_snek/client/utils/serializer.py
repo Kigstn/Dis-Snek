@@ -6,8 +6,8 @@ from typing import Optional
 
 from attr import fields, has
 
-from dis_snek.client.const import MISSING
-from dis_snek.models.discord.file import File
+from dis_snek.client.const import MISSING, T
+from dis_snek.models.discord.file import UPLOADABLE_TYPE, File
 
 __all__ = ["no_export_meta", "export_converter", "to_dict", "dict_filter_none", "dict_filter_missing", "to_image_data"]
 
@@ -44,7 +44,7 @@ def to_dict(inst) -> dict:
     return d
 
 
-def _to_dict_any(inst):
+def _to_dict_any(inst: T) -> dict | list | str | T:
     if has(inst.__class__):
         return to_dict(inst)
     elif isinstance(inst, dict):
@@ -68,18 +68,20 @@ def dict_filter_missing(data: dict) -> dict:
     return {k: v for k, v in data.items() if v is not MISSING}
 
 
-def to_image_data(imagefile) -> Optional[str]:
-    if isinstance(imagefile, IOBase):
-        image_data = imagefile.read()
-    elif isinstance(imagefile, (str, Path)):
-        with open(imagefile, "rb") as image_buffer:
-            image_data = image_buffer.read()
-    elif isinstance(imagefile, File):
-        with open(imagefile.file, "rb") as image_buffer:
-            image_data = image_buffer.read()
-
-    else:
-        return imagefile
+def to_image_data(imagefile: Optional[UPLOADABLE_TYPE]) -> Optional[str]:
+    match imagefile:
+        case bytes():
+            image_data = imagefile
+        case IOBase():
+            image_data = imagefile.read()
+        case Path() | str():
+            with open(str(imagefile), "rb") as image_buffer:
+                image_data = image_buffer.read()
+        case File():
+            with imagefile.open_file() as image_buffer:
+                image_data = image_buffer.read()
+        case _:
+            return imagefile
 
     mimetype = _get_file_mimetype(image_data)
     encoded_image = b64encode(image_data).decode("ascii")
@@ -87,7 +89,7 @@ def to_image_data(imagefile) -> Optional[str]:
     return f"data:{mimetype};base64,{encoded_image}"
 
 
-def _get_file_mimetype(filedata: bytes):
+def _get_file_mimetype(filedata: bytes) -> str:
     if filedata.startswith((b"GIF87a", b"GIF89a")):
         return "image/gif"
     elif filedata.startswith(b"\x89PNG\x0D\x0A\x1A\x0A"):

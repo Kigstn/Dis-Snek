@@ -1,8 +1,13 @@
 from typing import TYPE_CHECKING, Any, List, Optional
 
+import discord_typings
+
 from dis_snek.client.const import MISSING, Absent
 from ..route import Route
 from dis_snek.client.utils.converters import timestamp_converter
+
+__all__ = ["ThreadRequests"]
+
 
 if TYPE_CHECKING:
     from dis_snek.models.discord.snowflake import Snowflake_Type
@@ -53,7 +58,7 @@ class ThreadRequests:
         """
         return await self.request(Route("DELETE", f"/channels/{thread_id}/thread-members/{user_id}"))
 
-    async def list_thread_members(self, thread_id: "Snowflake_Type") -> List[dict]:
+    async def list_thread_members(self, thread_id: "Snowflake_Type") -> List[discord_typings.ThreadMemberData]:
         """
         Get a list of members in the thread.
 
@@ -67,7 +72,7 @@ class ThreadRequests:
 
     async def list_public_archived_threads(
         self, channel_id: "Snowflake_Type", limit: int = None, before: Optional["Snowflake_Type"] = None
-    ) -> dict:
+    ) -> discord_typings.ListThreadsData:
         """
         Get a list of archived public threads in a channel.
 
@@ -88,7 +93,7 @@ class ThreadRequests:
 
     async def list_private_archived_threads(
         self, channel_id: "Snowflake_Type", limit: int = None, before: Optional["Snowflake_Type"] = None
-    ) -> dict:
+    ) -> discord_typings.ListThreadsData:
         """
         Get a list of archived private threads in a channel.
 
@@ -109,7 +114,7 @@ class ThreadRequests:
 
     async def list_joined_private_archived_threads(
         self, channel_id: "Snowflake_Type", limit: int = None, before: Optional["Snowflake_Type"] = None
-    ) -> dict:
+    ) -> discord_typings.ListThreadsData:
         """
         Get a list of archived private threads in a channel that you have joined.
 
@@ -130,7 +135,7 @@ class ThreadRequests:
             Route("GET", f"/channels/{channel_id}/users/@me/threads/archived/private"), params=payload
         )
 
-    async def list_active_threads(self, guild_id: "Snowflake_Type") -> dict:
+    async def list_active_threads(self, guild_id: "Snowflake_Type") -> discord_typings.ListThreadsData:
         """
         List active threads within a guild.
 
@@ -147,11 +152,11 @@ class ThreadRequests:
         channel_id: "Snowflake_Type",
         name: str,
         auto_archive_duration: int,
-        thread_type: int = None,
-        invitable: Optional[bool] = None,
-        message_id: Optional["Snowflake_Type"] = None,
+        thread_type: Absent[int] = MISSING,
+        invitable: Absent[bool] = MISSING,
+        message_id: Absent["Snowflake_Type"] = MISSING,
         reason: Absent[str] = MISSING,
-    ) -> dict:
+    ) -> discord_typings.ThreadChannelData:
         """
         Create a thread in the given channel. Can either create a thread with or without a message.
 

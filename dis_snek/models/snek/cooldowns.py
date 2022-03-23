@@ -36,19 +36,19 @@ class Buckets(IntEnum):
         if self is Buckets.USER:
             return context.author.id
         elif self is Buckets.GUILD:
-            return context.guild.id if context.guild else context.author.id
+            return context.guild_id if context.guild else context.author.id
         elif self is Buckets.CHANNEL:
             return context.channel.id
         elif self is Buckets.MEMBER:
-            return (context.guild.id, context.author.id) if context.guild else context.author.id
+            return (context.guild_id, context.author.id) if context.guild else context.author.id
         elif self is Buckets.CATEGORY:
-            return await context.channel.parent.id if context.channel.parent else context.channel.id
+            return await context.channel.parent_id if context.channel.parent else context.channel.id
         elif self is Buckets.ROLE:
             return context.channel.id if not context.guild else context.author.top_role.id
         else:
             return context.author.id
 
-    def __call__(self, context: "Context"):
+    def __call__(self, context: "Context") -> Any:
         return self.get_key(context)
 
 
@@ -57,7 +57,7 @@ class Cooldown:
 
     __slots__ = "bucket", "cooldown_repositories", "rate", "interval"
 
-    def __init__(self, cooldown_bucket: Buckets, rate: int, interval: float):
+    def __init__(self, cooldown_bucket: Buckets, rate: int, interval: float) -> None:
         self.bucket: Buckets = cooldown_bucket
         self.cooldown_repositories = {}
         self.rate: int = rate
@@ -151,7 +151,7 @@ class CooldownSystem:
 
     __slots__ = "rate", "interval", "opened", "_tokens"
 
-    def __init__(self, rate: int, interval: float):
+    def __init__(self, rate: int, interval: float) -> None:
         self.rate: int = rate
         self.interval: float = interval
         self.opened: float = 0.0
@@ -232,7 +232,7 @@ class MaxConcurrency:
 
     """
 
-    def __init__(self, concurrent: int, concurrency_bucket: Buckets, wait=False):
+    def __init__(self, concurrent: int, concurrency_bucket: Buckets, wait: bool = False) -> None:
         self.bucket: Buckets = concurrency_bucket
         self.concurrency_repository: Dict = {}
         self.concurrent: int = concurrent

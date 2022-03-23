@@ -1,29 +1,31 @@
 import colorsys
 import re
 from enum import Enum
-from typing import Tuple
+from typing import Tuple, Union, Optional
 
-import attr
+from dis_snek.client.utils.attr_utils import define, field
 
 __all__ = [
     "Color",
     "BrandColors",
     "MaterialColors",
     "FlatUIColors",
+    "process_color",
     "Colour",
     "BrandColours",
     "MaterialColours",
     "FlatUIColours",
+    "process_colour",
 ]
 
 
-@attr.s(init=False, slots=True)
+@define(init=False)
 class Color:
     hex_regex = re.compile(r"^#(?:[0-9a-fA-F]{3}){1,2}$")
 
-    value: int = attr.ib()
+    value: int = field(repr=True)
 
-    def __init__(self, color=None):
+    def __init__(self, color=None) -> None:
         color = color or (0, 0, 0)
         if isinstance(color, int):
             self.value = color
@@ -193,8 +195,22 @@ class FlatUIColors(Color, Enum):
     ASBESTOS = "#7F8C8D"
 
 
+def process_color(color: Optional[Union[Color, dict, tuple, list, str, int]]) -> Optional[int]:
+    if not color:
+        return color
+    elif isinstance(color, Color):
+        return color.value
+    elif isinstance(color, dict):
+        return color["value"]
+    elif isinstance(color, (tuple, list, str, int)):
+        return Color(color).value
+
+    raise ValueError(f"Invalid color: {type(color)}")
+
+
 # aliases
 Colour = Color
 BrandColours = BrandColors
 MaterialColours = MaterialColors
 FlatUIColours = FlatUIColors
+process_colour = process_color

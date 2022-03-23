@@ -1,11 +1,9 @@
 from asyncio import QueueEmpty
 from collections import namedtuple
-from typing import TYPE_CHECKING, List
-
-import attr
+from typing import TYPE_CHECKING, List, Optional
 
 from dis_snek.client.const import MISSING
-from dis_snek.client.utils.attr_utils import define
+from dis_snek.client.utils.attr_utils import define, field
 from dis_snek.models.discord.emoji import PartialEmoji
 from dis_snek.models.discord.snowflake import to_snowflake
 from dis_snek.models.snek.iterator import AsyncIterator
@@ -30,7 +28,7 @@ class ReactionUsers(AsyncIterator):
 
     """
 
-    def __init__(self, reaction: "Reaction", limit=50, after=None):
+    def __init__(self, reaction: "Reaction", limit: int = 50, after: Optional["Snowflake_Type"] = None) -> None:
         self.reaction: "Reaction" = reaction
         self.after: "Snowflake_Type" = after
         self._more = True
@@ -61,23 +59,23 @@ class ReactionUsers(AsyncIterator):
 
 @define()
 class Reaction(ClientObject):
-    count: int = attr.ib()
-    me: bool = attr.ib(default=False)
-    emoji: "PartialEmoji" = attr.ib(converter=PartialEmoji.from_dict)
+    count: int = field()
+    me: bool = field(default=False)
+    emoji: "PartialEmoji" = field(converter=PartialEmoji.from_dict)
 
-    _channel_id: "Snowflake_Type" = attr.ib(converter=to_snowflake)
-    _message_id: "Snowflake_Type" = attr.ib(converter=to_snowflake)
+    _channel_id: "Snowflake_Type" = field(converter=to_snowflake)
+    _message_id: "Snowflake_Type" = field(converter=to_snowflake)
 
-    def users(self, limit: int = 0, after=None) -> ReactionUsers:
+    def users(self, limit: int = 0, after: "Snowflake_Type" = None) -> ReactionUsers:
         return ReactionUsers(self, limit, after)
 
     @property
     def message(self) -> "Message":
-        return self._client.cache.message_cache.get((self._channel_id, self._message_id))
+        return self._client.cache.get_message((self._channel_id, self._message_id))
 
     @property
     def channel(self) -> "TYPE_ALL_CHANNEL":
-        return self._client.cache.channel_cache.get(self._channel_id)
+        return self._client.cache.get_channel(self._channel_id)
 
     async def remove(self) -> None:
         """Remove all this emoji's reactions from the message."""

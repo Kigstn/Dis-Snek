@@ -49,9 +49,8 @@ class UserEvents(EventMixinTemplate):
     @Processor.define()
     async def _on_raw_presence_update(self, event: "RawGatewayEvent") -> None:
         g_id = to_snowflake(event.data["guild_id"])
-        user = await self.cache.fetch_user(event.data["user"]["id"], request_fallback=False)
-        if user:
+        if user := self.cache.get_user(event.data["user"]["id"]):
             status = Status[event.data["status"].upper()]
-            activities = [Activity.from_dict(a) for a in event.data.get("activities")]
+            activities = Activity.from_list(event.data.get("activities"))
 
             self.dispatch(events.PresenceUpdate(user, status, activities, event.data.get("client_status", None), g_id))
