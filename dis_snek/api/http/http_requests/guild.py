@@ -523,6 +523,18 @@ class GuildRequests:
         """
         return await self.request(Route("GET", f"/guilds/{guild_id}/vanity-url"))
 
+    async def get_guild_channels(self, guild_id: "Snowflake_Type") -> dict:
+        """
+        Gets a list of guild channel objects.
+
+        Args:
+            guild_id: The ID of the guild
+
+        Returns:
+            A list of channels in this guild. Does not include threads.
+        """
+        return await self.request(Route("GET", f"/guilds/{guild_id}/channels"))
+
     async def modify_guild_widget(
         self, guild_id: "Snowflake_Type", enabled: bool = None, channel_id: "Snowflake_Type" = None
     ) -> discord_typings.GuildWidgetData:
@@ -606,6 +618,39 @@ class GuildRequests:
         return await self.request(
             Route("PATCH", f"/guilds/{guild_id}/voice-states/{user_id}"),
             data=dict_filter_none({"channel_id": channel_id, "suppress": suppress}),
+        )
+
+    async def create_guild(
+        self,
+        name: str,
+        icon: Absent[str] = MISSING,
+        verification_level: Absent[int] = MISSING,
+        default_message_notifications: Absent[int] = MISSING,
+        explicit_content_filter: Absent[int] = MISSING,
+        roles: Absent[list[dict]] = MISSING,
+        channels: Absent[list[dict]] = MISSING,
+        afk_channel_id: Absent["Snowflake_Type"] = MISSING,
+        afk_timeout: Absent[int] = MISSING,
+        system_channel_id: Absent["Snowflake_Type"] = MISSING,
+        system_channel_flags: Absent[int] = MISSING,
+    ) -> dict:
+        return await self.request(
+            Route("POST", "/guilds"),
+            data=dict_filter_missing(
+                {
+                    "name": name,
+                    "icon": icon,
+                    "verification_level": verification_level,
+                    "default_message_notifications": default_message_notifications,
+                    "explicit_content_filter": explicit_content_filter,
+                    "roles": roles,
+                    "channels": channels,
+                    "afk_channel_id": afk_channel_id,
+                    "afk_timeout": afk_timeout,
+                    "system_channel_id": system_channel_id,
+                    "system_channel_flags": system_channel_flags,
+                }
+            ),
         )
 
     async def create_guild_from_guild_template(
