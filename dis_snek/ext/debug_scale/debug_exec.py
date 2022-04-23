@@ -25,8 +25,7 @@ __all__ = ["DebugExec"]
 
 
 class DebugExec(Scale):
-    def __init__(self, bot) -> None:
-        self.cache: dict[int, str] = {}
+    cache: dict[int, str] = {}
 
     @slash_command("debug", sub_cmd_name="exec", sub_cmd_description="Run arbitrary code")
     async def debug_exec(self, ctx: InteractionContext) -> Optional[Message]:
