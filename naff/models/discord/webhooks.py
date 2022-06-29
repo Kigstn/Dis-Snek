@@ -1,4 +1,4 @@
-from enum import IntEnum
+from naff.models.discord.enums import NaffIntEnum
 from typing import Optional, TYPE_CHECKING, Union, Dict, Any, List
 import re
 
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 __all__ = ("WebhookTypes", "Webhook")
 
 
-class WebhookTypes(IntEnum):
+class WebhookTypes(NaffIntEnum):
     INCOMING = 1
     """Incoming Webhooks can post messages to channels with a generated token"""
     CHANNEL_FOLLOWER = 2

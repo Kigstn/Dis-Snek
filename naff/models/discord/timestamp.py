@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timezone
-from enum import Enum
+from naff.models.discord.enums import NaffEnum
 from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ __all__ = ("TimestampStyles", "Timestamp")
 DISCORD_EPOCH = 1420070400000
 
 
-class TimestampStyles(str, Enum):
+class TimestampStyles(str, NaffEnum):
     ShortTime = "t"
     LongTime = "T"
     ShortDate = "d"

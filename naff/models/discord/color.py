@@ -1,6 +1,6 @@
 import colorsys
 import re
-from enum import Enum
+from naff.models.discord.enums import NaffEnum
 from random import randint
 from typing import Tuple, Union, Optional
 
@@ -183,7 +183,7 @@ class Color:
         self.rgb = tuple(round(v * 255) for v in colorsys.hsv_to_rgb(*value))
 
 
-class BrandColors(Color, Enum):
+class BrandColors(Color, NaffEnum):
     """
     A collection of colors complying to the Discord Brand specification.
 
@@ -200,7 +200,7 @@ class BrandColors(Color, Enum):
     BLACK = "#000000"
 
 
-class MaterialColors(Color, Enum):
+class MaterialColors(Color, NaffEnum):
     """
     A collection of material ui colors.
 
@@ -230,7 +230,7 @@ class MaterialColors(Color, Enum):
     BLUE_GREY = "#607D8B"
 
 
-class FlatUIColors(Color, Enum):
+class FlatUIColors(Color, NaffEnum):
     """
     A collection of flat ui colours.
 
@@ -260,7 +260,7 @@ class FlatUIColors(Color, Enum):
     ASBESTOS = "#7F8C8D"
 
 
-class RoleColors(Color, Enum):
+class RoleColors(Color, NaffEnum):
     """A collection of the default role colors Discord provides."""
 
     TEAL = "#1ABC9C"

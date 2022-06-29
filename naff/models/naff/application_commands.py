@@ -3,12 +3,12 @@ import inspect
 import logging
 import re
 import typing
-from enum import IntEnum
 from typing import TYPE_CHECKING, Annotated, Callable, Coroutine, Dict, List, Union, Optional, Any
 
 import attrs
 from attr import Attribute
 
+from naff.models.discord.enums import NaffIntEnum
 import naff.models.discord.channel as channel
 from naff.client.const import (
     GLOBAL_SCOPE,
@@ -98,7 +98,7 @@ LocalizedName = LocalisedName
 LocalizedDesc = LocalisedDesc
 
 
-class OptionTypes(IntEnum):
+class OptionTypes(NaffIntEnum):
     """Option types supported by slash commands."""
 
     SUB_COMMAND = 1
@@ -141,7 +141,7 @@ class OptionTypes(IntEnum):
             return cls.NUMBER
 
 
-class CallbackTypes(IntEnum):
+class CallbackTypes(NaffIntEnum):
     """Types of callback supported by interaction response."""
 
     PONG = 1

@@ -3,7 +3,6 @@ import sys
 import array
 import ctypes
 import ctypes.util
-from enum import IntEnum
 from typing import Any
 
 import attr
@@ -11,6 +10,8 @@ import attr
 from naff.client.const import MISSING
 
 __all__ = ("Encoder",)
+
+from naff.models.discord.enums import NaffIntEnum
 
 
 c_int_ptr = ctypes.POINTER(ctypes.c_int)
@@ -52,7 +53,7 @@ class FuncData:
 # from https://github.com/xiph/opus/blob/master/include/opus_defines.h
 
 
-class OpusStates(IntEnum):
+class OpusStates(NaffIntEnum):
     OK = 0
     """No Error!"""
     BAD_ARG = -1
@@ -71,7 +72,7 @@ class OpusStates(IntEnum):
     """Memory allocation has failed"""
 
 
-class EncoderCTL(IntEnum):
+class EncoderCTL(NaffIntEnum):
     OK = 0
     APPLICATION_AUDIO = 2049
     APPLICATION_VOIP = 2048
@@ -83,12 +84,12 @@ class EncoderCTL(IntEnum):
     CTL_SET_SIGNAL = 4024
 
 
-class DecoderCTL(IntEnum):
+class DecoderCTL(NaffIntEnum):
     CTL_SET_GAIN = 4034
     CTL_LAST_PACKET_DURATION = 4039
 
 
-class BandCTL(IntEnum):
+class BandCTL(NaffIntEnum):
     NARROW = 1101
     MEDIUM = 1102
     WIDE = 1103
@@ -96,7 +97,7 @@ class BandCTL(IntEnum):
     FULL = 1105
 
 
-class SignalCTL(IntEnum):
+class SignalCTL(NaffIntEnum):
     AUTO = -1000
     VOICE = 3001
     MUSIC = 3002

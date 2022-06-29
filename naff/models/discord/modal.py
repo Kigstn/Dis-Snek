@@ -1,5 +1,5 @@
 import uuid
-from enum import IntEnum
+from naff.models.discord.enums import NaffIntEnum
 from typing import Union, Optional, List
 
 import attrs
@@ -13,7 +13,7 @@ from naff.client.utils.attr_utils import define, field, str_validator
 __all__ = ("InputText", "Modal", "ParagraphText", "ShortText", "TextStyles")
 
 
-class TextStyles(IntEnum):
+class TextStyles(NaffIntEnum):
     SHORT = 1
     PARAGRAPH = 2
 

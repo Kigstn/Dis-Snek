@@ -4,11 +4,11 @@ import random
 import socket
 import struct
 import time
-from enum import IntEnum
 from threading import Event
 
 from aiohttp import WSMsgType
 
+from naff.models.discord.enums import NaffIntEnum
 from naff.api.gateway.websocket import WebsocketClient
 from naff.api.voice.encryption import Encryption
 from naff.client.const import logger_name
@@ -20,7 +20,7 @@ __all__ = ("VoiceGateway",)
 log = logging.getLogger(logger_name)
 
 
-class OP(IntEnum):
+class OP(NaffIntEnum):
     IDENTIFY = 0
     SELECT_PROTOCOL = 1
     READY = 2

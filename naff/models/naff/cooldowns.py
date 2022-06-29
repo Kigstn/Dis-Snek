@@ -1,7 +1,8 @@
 import asyncio
 import time
-from enum import IntEnum
 from typing import TYPE_CHECKING, Any, Dict
+
+from naff.models.discord.enums import NaffIntEnum
 
 if TYPE_CHECKING:
     from naff.models.naff.context import Context
@@ -9,7 +10,7 @@ if TYPE_CHECKING:
 __all__ = ("Buckets", "Cooldown", "CooldownSystem", "MaxConcurrency")
 
 
-class Buckets(IntEnum):
+class Buckets(NaffIntEnum):
     """
     Outlines the cooldown buckets that may be used. Should a bucket for guilds exist, and the command is invoked in a DM, a sane default will be used.
 

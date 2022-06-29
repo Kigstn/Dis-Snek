@@ -4,7 +4,7 @@ from functools import reduce
 from operator import or_
 from typing import Iterator, Tuple
 
-from naff.client.const import logger_name
+from naff.client.const import MISSING, logger_name
 
 _log = logging.getLogger(logger_name)
 
@@ -46,6 +46,8 @@ __all__ = (
     "ScheduledEventType",
     "ScheduledEventStatus",
     "AuditLogEventType",
+    "NaffIntEnum",
+    "NaffEnum",
 )
 
 
@@ -63,13 +65,43 @@ def _distinct(source) -> Tuple:
     return (x for x in source if (x.value & (x.value - 1)) == 0 and x.value != 0)
 
 
+def _log_type_mismatch(cls, value) -> None:
+    _log.error(
+        f"Class `{cls.__name__}` received an invalid value `{value}`. Please update NAFF or report this issue on GitHub - https://github.com/NAFTeam/NAFF/issues"
+    )
+
+
+class UnknownEnumLogger(EnumMeta):
+    def __call__(cls, value, *args, **kwargs) -> "UnknownEnumLogger":
+        try:
+            return super().__call__(value, *args, **kwargs)
+        except ValueError:
+            # unexpected values should not crash the lib
+            _log_type_mismatch(cls=cls, value=value)
+            return MISSING
+
+
+class NaffEnum(Enum, metaclass=UnknownEnumLogger):
+    pass
+
+
+class NaffIntEnum(IntEnum, metaclass=UnknownEnumLogger):
+    pass
+
+
 class DistinctFlag(EnumMeta):
     def __iter__(cls) -> Iterator:
         yield from _distinct(super().__iter__())
 
     def __call__(cls, value, names=None, *, module=None, qualname=None, type=None, start=1) -> "DistinctFlag":
         # To automatically convert string values into ints (eg for permissions)
-        return super().__call__(int(value), names, module=module, qualname=qualname, type=type, start=start)
+        try:
+            int_value = int(value)
+            return super().__call__(int_value, names, module=module, qualname=qualname, type=type, start=start)
+        except TypeError:
+            # unexpected values should not crash the lib
+            _log_type_mismatch(cls=cls, value=value)
+            return MISSING
 
 
 class DiscordIntFlag(IntFlag, metaclass=DistinctFlag):
@@ -77,7 +109,7 @@ class DiscordIntFlag(IntFlag, metaclass=DistinctFlag):
         yield from _decompose(self.__class__, self)[0]
 
 
-class WebSocketOPCodes(IntEnum):
+class WebSocketOPCodes(NaffIntEnum):
     """Codes used by the Gateway to signify events."""
 
     DISPATCH = 0
@@ -246,14 +278,14 @@ class ApplicationFlags(DiscordIntFlag):  # type: ignore
     """Application is a voice channel activity (ie YouTube Together)"""
 
 
-class TeamMembershipState(IntEnum):
+class TeamMembershipState(NaffIntEnum):
     """Status of membership in the team."""
 
     INVITED = 1
     ACCEPTED = 2
 
 
-class PremiumTypes(IntEnum):
+class PremiumTypes(NaffIntEnum):
     """Types of premium membership."""
 
     NONE = 0
@@ -264,7 +296,7 @@ class PremiumTypes(IntEnum):
     """Full Nitro membership"""
 
 
-class MessageTypes(IntEnum):
+class MessageTypes(NaffIntEnum):
     """Types of message."""
 
     DEFAULT = 0
@@ -293,7 +325,7 @@ class MessageTypes(IntEnum):
     AUTO_MODERATION_ACTION = 24
 
 
-class EmbedTypes(Enum):
+class EmbedTypes(NaffEnum):
     """Types of embed."""
 
     RICH = "rich"
@@ -305,7 +337,7 @@ class EmbedTypes(Enum):
     AUTOMOD_MESSAGE = "auto_moderation_message"
 
 
-class MessageActivityTypes(IntEnum):
+class MessageActivityTypes(NaffIntEnum):
     """An activity object, similar to an embed."""
 
     JOIN = 1
@@ -458,7 +490,7 @@ class Permissions(DiscordIntFlag):  # type: ignore
     ALL = AntiFlag()
 
 
-class ChannelTypes(IntEnum):
+class ChannelTypes(NaffIntEnum):
     """Types of channel."""
 
     GUILD_TEXT = 0
@@ -509,7 +541,7 @@ class ChannelTypes(IntEnum):
         return self.value in {2, 13}
 
 
-class ComponentTypes(IntEnum):
+class ComponentTypes(NaffIntEnum):
     """The types of components supported by discord."""
 
     ACTION_ROW = 1
@@ -522,7 +554,7 @@ class ComponentTypes(IntEnum):
     """Text input object"""
 
 
-class CommandTypes(IntEnum):
+class CommandTypes(NaffIntEnum):
     """The interaction commands supported by discord."""
 
     CHAT_INPUT = 1
@@ -533,7 +565,7 @@ class CommandTypes(IntEnum):
     """A UI-based command that shows up when you right click or tap on a message"""
 
 
-class InteractionTypes(IntEnum):
+class InteractionTypes(NaffIntEnum):
     """The type of interaction received by discord."""
 
     PING = 1
@@ -543,7 +575,7 @@ class InteractionTypes(IntEnum):
     MODAL_RESPONSE = 5
 
 
-class ButtonStyles(IntEnum):
+class ButtonStyles(NaffIntEnum):
     """The styles of buttons supported."""
 
     # Based on discord api
@@ -568,7 +600,7 @@ class ButtonStyles(IntEnum):
     URL = 5
 
 
-class MentionTypes(str, Enum):
+class MentionTypes(str, NaffEnum):
     """Types of mention."""
 
     EVERYONE = "everyone"
@@ -576,21 +608,21 @@ class MentionTypes(str, Enum):
     USERS = "users"
 
 
-class OverwriteTypes(IntEnum):
+class OverwriteTypes(NaffIntEnum):
     """Types of permission overwrite."""
 
     ROLE = 0
     MEMBER = 1
 
 
-class DefaultNotificationLevels(IntEnum):
+class DefaultNotificationLevels(NaffIntEnum):
     """Default Notification levels for dms and guilds."""
 
     ALL_MESSAGES = 0
     ONLY_MENTIONS = 1
 
 
-class ExplicitContentFilterLevels(IntEnum):
+class ExplicitContentFilterLevels(NaffIntEnum):
     """Automatic filtering of explicit content."""
 
     DISABLED = 0
@@ -598,14 +630,14 @@ class ExplicitContentFilterLevels(IntEnum):
     ALL_MEMBERS = 2
 
 
-class MFALevels(IntEnum):
+class MFALevels(NaffIntEnum):
     """Does the user use 2FA."""
 
     NONE = 0
     ELEVATED = 1
 
 
-class VerificationLevels(IntEnum):
+class VerificationLevels(NaffIntEnum):
     """Levels of verification needed by a guild."""
 
     NONE = 0
@@ -620,7 +652,7 @@ class VerificationLevels(IntEnum):
     """Must have a verified phone number on their Discord Account"""
 
 
-class NSFWLevels(IntEnum):
+class NSFWLevels(NaffIntEnum):
     """A guilds NSFW Level."""
 
     DEFAULT = 0
@@ -629,7 +661,7 @@ class NSFWLevels(IntEnum):
     AGE_RESTRICTED = 3
 
 
-class PremiumTiers(IntEnum):
+class PremiumTiers(NaffIntEnum):
     """The boost level of a server."""
 
     NONE = 0
@@ -667,14 +699,14 @@ class ChannelFlags(DiscordIntFlag):
     NONE = 0
 
 
-class VideoQualityModes(IntEnum):
+class VideoQualityModes(NaffIntEnum):
     """Video quality settings."""
 
     AUTO = 1
     FULL = 2
 
 
-class AutoArchiveDuration(IntEnum):
+class AutoArchiveDuration(NaffIntEnum):
     """Thread archive duration, in minutes."""
 
     ONE_HOUR = 60
@@ -683,7 +715,7 @@ class AutoArchiveDuration(IntEnum):
     ONE_WEEK = 10080
 
 
-class ActivityType(IntEnum):
+class ActivityType(NaffIntEnum):
     """
     The types of presence activity that can be used in presences.
 
@@ -721,7 +753,7 @@ class ActivityFlags(DiscordIntFlag):
     EMBEDDED = 1 << 8
 
 
-class Status(str, Enum):
+class Status(str, NaffEnum):
     """Represents the statuses a user may have."""
 
     ONLINE = "online"
@@ -734,28 +766,28 @@ class Status(str, Enum):
     DO_NOT_DISTURB = DND
 
 
-class StagePrivacyLevel(IntEnum):
+class StagePrivacyLevel(NaffIntEnum):
     PUBLIC = 1
     GUILD_ONLY = 2
 
 
-class IntegrationExpireBehaviour(IntEnum):
+class IntegrationExpireBehaviour(NaffIntEnum):
     REMOVE_ROLE = 0
     KICK = 1
 
 
-class InviteTargetTypes(IntEnum):
+class InviteTargetTypes(NaffIntEnum):
     STREAM = 1
     EMBEDDED_APPLICATION = 2
 
 
-class ScheduledEventPrivacyLevel(IntEnum):
+class ScheduledEventPrivacyLevel(NaffIntEnum):
     """The privacy level of the scheduled event."""
 
     GUILD_ONLY = 2
 
 
-class ScheduledEventType(IntEnum):
+class ScheduledEventType(NaffIntEnum):
     """The type of entity that the scheduled event is attached to."""
 
     STAGE_INSTANCE = 1
@@ -766,7 +798,7 @@ class ScheduledEventType(IntEnum):
     """ External URL """
 
 
-class ScheduledEventStatus(IntEnum):
+class ScheduledEventStatus(NaffIntEnum):
     """The status of the scheduled event."""
 
     SCHEDULED = 1
@@ -775,7 +807,7 @@ class ScheduledEventStatus(IntEnum):
     CANCELED = 4
 
 
-class AuditLogEventType(IntEnum):
+class AuditLogEventType(NaffIntEnum):
     """The type of audit log entry type"""
 
     GUILD_UPDATE = 1

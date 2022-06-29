@@ -1,4 +1,4 @@
-from enum import IntEnum
+from naff.models.discord.enums import NaffIntEnum
 from typing import TYPE_CHECKING, List, Optional, Union
 
 from naff.client.const import MISSING, Absent
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 __all__ = ("StickerTypes", "StickerFormatTypes", "StickerItem", "Sticker", "StickerPack")
 
 
-class StickerTypes(IntEnum):
+class StickerTypes(NaffIntEnum):
     """Types of sticker."""
 
     STANDARD = 1
@@ -25,7 +25,7 @@ class StickerTypes(IntEnum):
     """A sticker uploaded to a Boosted guild for the guild's members."""
 
 
-class StickerFormatTypes(IntEnum):
+class StickerFormatTypes(NaffIntEnum):
     """File formats for stickers."""
 
     PNG = 1
